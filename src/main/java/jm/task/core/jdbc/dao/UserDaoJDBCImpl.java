@@ -1,3 +1,4 @@
+
 package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
@@ -14,7 +15,6 @@ import java.util.List;
 public class UserDaoJDBCImpl implements UserDao {
 
     public UserDaoJDBCImpl() {
-
     }
 
     // Создание таблицы пользователей
@@ -71,6 +71,66 @@ public class UserDaoJDBCImpl implements UserDao {
 
         } catch (SQLException e) {
             throw new RuntimeException("Ошибка добавления пользователя", e);
+        }
+    }
+
+    // Получение пользователя по ID
+    @Override
+    public User getUserById(long id) {
+
+        String sql = "SELECT * FROM users WHERE id = ?";
+
+        try (Connection connection = Util.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setLong(1, id);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+
+                if (resultSet.next()) {
+                    User user = new User(
+                            resultSet.getString("name"),
+                            resultSet.getString("lastName"),
+                            resultSet.getByte("age")
+                    );
+
+                    user.setId(resultSet.getLong("id"));
+
+                    return user;
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка получения пользователя по ID", e);
+        }
+
+        return null;
+    }
+
+    // Обновление пользователя
+    @Override
+    public void updateUser(User user) {
+
+        if (user == null || user.getId() == null) {
+            throw new IllegalArgumentException(
+                    "Пользователь и его ID не должны быть null"
+            );
+        }
+
+        String sql = "UPDATE users SET name = ?, lastName = ?, age = ? WHERE id = ?";
+
+        try (Connection connection = Util.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, user.getName());
+            preparedStatement.setString(2, user.getLastName());
+            preparedStatement.setByte(3, user.getAge());
+            preparedStatement.setLong(4, user.getId());
+
+            preparedStatement.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка обновления пользователя", e);
         }
     }
 
